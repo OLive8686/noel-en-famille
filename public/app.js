@@ -1,6 +1,8 @@
 let config = {};
 let currentUser = localStorage.getItem('noel_user') || '';
 let isAdmin = false;
+let adminUnlocked = localStorage.getItem('noel_admin_unlocked') === 'true';
+const ADMIN_CODE = '4747';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadConfig();
@@ -46,17 +48,46 @@ function showApp() {
   document.getElementById('app-screen').classList.remove('hidden');
   document.getElementById('current-user-display').textContent = currentUser;
 
-  // Check if admin
-  isAdmin = (currentUser === config.admin);
+  // Check if admin (must be admin user AND have unlocked with code)
+  const isAdminUser = (currentUser === config.admin);
+  isAdmin = isAdminUser && adminUnlocked;
+
   if (isAdmin) {
     document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
   } else {
     document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
   }
 
+  // If admin user but not unlocked, show code prompt
+  if (isAdminUser && !adminUnlocked) {
+    setTimeout(() => {
+      document.getElementById('modal-admin-code').classList.remove('hidden');
+      document.getElementById('admin-code-input').focus();
+    }, 500);
+  }
+
   updateDestinataireSelect();
   loadCadeaux(); loadPlats(); loadStats();
   if (isAdmin) loadAdminData();
+}
+
+function verifyAdminCode() {
+  const input = document.getElementById('admin-code-input');
+  const code = input.value.trim();
+
+  if (code === ADMIN_CODE) {
+    adminUnlocked = true;
+    localStorage.setItem('noel_admin_unlocked', 'true');
+    isAdmin = true;
+    closeModal('modal-admin-code');
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+    loadAdminData();
+    input.value = '';
+  } else {
+    alert('Code incorrect !');
+    input.value = '';
+    input.focus();
+  }
 }
 
 function setupEventListeners() {
@@ -93,6 +124,7 @@ function setupEventListeners() {
   document.getElementById('add-category-btn').onclick = addCategory;
   document.getElementById('new-member-name').onkeypress = (e) => { if (e.key === 'Enter') addMember(); };
   document.getElementById('new-category-name').onkeypress = (e) => { if (e.key === 'Enter') addCategory(); };
+  document.getElementById('admin-code-input').onkeypress = (e) => { if (e.key === 'Enter') verifyAdminCode(); };
 }
 
 async function loadCadeaux() {

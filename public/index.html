@@ -121,6 +121,18 @@
     </div>
   </div>
 
+  <div id="modal-admin-code" class="modal hidden">
+    <div class="modal-content" style="max-width:300px;">
+      <h2>Acces Admin</h2>
+      <p style="text-align:center;color:#666;margin-bottom:15px;">Entrez le code secret</p>
+      <input type="password" id="admin-code-input" placeholder="Code..." style="text-align:center;font-size:1.5rem;letter-spacing:5px;">
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-admin-code')">Annuler</button>
+        <button type="button" class="btn-save" onclick="verifyAdminCode()">Valider</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
