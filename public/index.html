@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noel en Famille</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-screen" class="screen">
+    <div class="login-container">
+      <h1>Noel en Famille</h1>
+      <p>Qui etes-vous ?</p>
+      <div id="user-buttons" class="user-buttons"></div>
+    </div>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <header>
+      <h1>Noel en Famille</h1>
+      <div class="header-info">
+        <span id="current-user-display"></span>
+        <button id="logout-btn" class="btn-small">Changer</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="cadeaux">Cadeaux</button>
+      <button class="tab" data-tab="repas">Repas</button>
+    </nav>
+
+    <div id="tab-cadeaux" class="tab-content active">
+      <div class="stats-bar" id="stats-bar"></div>
+      <button id="add-cadeau-btn" class="btn-add">+ Ajouter un cadeau</button>
+      <div id="cadeaux-list" class="items-list"></div>
+    </div>
+
+    <div id="tab-repas" class="tab-content">
+      <button id="add-plat-btn" class="btn-add">+ Ajouter un plat</button>
+      <div id="plats-list" class="items-list"></div>
+    </div>
+  </div>
+
+  <div id="modal-cadeau" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="modal-cadeau-title">Ajouter un cadeau</h2>
+      <form id="form-cadeau">
+        <input type="hidden" id="cadeau-id">
+        <label>Pour qui ?</label>
+        <select id="cadeau-destinataire" required></select>
+        <label>Description</label>
+        <input type="text" id="cadeau-description" required placeholder="Ex: Pull rouge taille M">
+        <label>Lien (optionnel)</label>
+        <input type="url" id="cadeau-url" placeholder="https://...">
+        <label>Prix estime</label>
+        <input type="number" id="cadeau-prix" step="0.01" placeholder="0.00">
+        <label>Magasin</label>
+        <input type="text" id="cadeau-magasin" placeholder="Ex: Amazon, Fnac...">
+        <label>Statut</label>
+        <select id="cadeau-statut">
+          <option value="a acheter">A acheter</option>
+          <option value="achete">Achete</option>
+        </select>
+        <div class="modal-buttons">
+          <button type="button" class="btn-cancel" onclick="closeModal('modal-cadeau')">Annuler</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-plat" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="modal-plat-title">Ajouter un plat</h2>
+      <form id="form-plat">
+        <input type="hidden" id="plat-id">
+        <label>Nom du plat</label>
+        <input type="text" id="plat-nom" required placeholder="Ex: Buche au chocolat">
+        <label>Categorie</label>
+        <select id="plat-categorie" required></select>
+        <label>Apporte par</label>
+        <select id="plat-apporte-par" required></select>
+        <label>Commentaires</label>
+        <textarea id="plat-commentaires" placeholder="Allergies, preferences..."></textarea>
+        <div class="modal-buttons">
+          <button type="button" class="btn-cancel" onclick="closeModal('modal-plat')">Annuler</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
