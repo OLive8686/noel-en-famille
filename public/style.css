@@ -384,6 +384,97 @@ header h1 {
   color: white;
 }
 
+/* Admin Section */
+.admin-section {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.admin-section h3 {
+  color: #1a472a;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1a472a;
+}
+
+.members-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.member-tag {
+  background: linear-gradient(135deg, #1a472a, #2d5a3f);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-tag .remove-btn {
+  background: rgba(255,255,255,0.3);
+  border: none;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.member-tag .remove-btn:hover {
+  background: rgba(255,0,0,0.5);
+}
+
+.add-member-form {
+  display: flex;
+  gap: 10px;
+}
+
+.add-member-form input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.btn-add-small {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #c41e3a, #8b0000);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-add-small:hover {
+  opacity: 0.9;
+}
+
+.admin-only {
+  background: linear-gradient(135deg, #ffd700, #ffb300) !important;
+  color: #333 !important;
+}
+
+.admin-card {
+  border-left: 4px solid #c41e3a;
+}
+
+.admin-card .card-meta {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 5px;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .login-container h1 {

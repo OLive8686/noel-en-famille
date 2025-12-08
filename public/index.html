@@ -27,6 +27,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="cadeaux">Cadeaux</button>
       <button class="tab" data-tab="repas">Repas</button>
+      <button class="tab admin-only hidden" data-tab="admin">Admin</button>
     </nav>
 
     <div id="tab-cadeaux" class="tab-content active">
@@ -38,6 +39,36 @@
     <div id="tab-repas" class="tab-content">
       <button id="add-plat-btn" class="btn-add">+ Ajouter un plat</button>
       <div id="plats-list" class="items-list"></div>
+    </div>
+
+    <div id="tab-admin" class="tab-content">
+      <div class="admin-section">
+        <h3>Statistiques globales</h3>
+        <div class="stats-bar" id="admin-stats-bar"></div>
+      </div>
+
+      <div class="admin-section">
+        <h3>Tous les cadeaux</h3>
+        <div id="admin-cadeaux-list" class="items-list"></div>
+      </div>
+
+      <div class="admin-section">
+        <h3>Gestion des membres</h3>
+        <div id="members-list" class="members-grid"></div>
+        <div class="add-member-form">
+          <input type="text" id="new-member-name" placeholder="Nouveau membre...">
+          <button id="add-member-btn" class="btn-add-small">Ajouter</button>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <h3>Gestion des categories</h3>
+        <div id="categories-list" class="members-grid"></div>
+        <div class="add-member-form">
+          <input type="text" id="new-category-name" placeholder="Nouvelle categorie...">
+          <button id="add-category-btn" class="btn-add-small">Ajouter</button>
+        </div>
+      </div>
     </div>
   </div>
 

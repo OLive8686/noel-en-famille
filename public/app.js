@@ -1,5 +1,6 @@
 let config = {};
 let currentUser = localStorage.getItem('noel_user') || '';
+let isAdmin = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadConfig();
@@ -44,16 +45,32 @@ function showApp() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   document.getElementById('current-user-display').textContent = currentUser;
+
+  // Check if admin
+  isAdmin = (currentUser === config.admin);
+  if (isAdmin) {
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+  } else {
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+  }
+
   updateDestinataireSelect();
   loadCadeaux(); loadPlats(); loadStats();
+  if (isAdmin) loadAdminData();
 }
 
 function setupEventListeners() {
   document.getElementById('logout-btn').onclick = () => {
     currentUser = '';
+    isAdmin = false;
     localStorage.removeItem('noel_user');
     document.getElementById('app-screen').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
+    // Reset to cadeaux tab
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-tab="cadeaux"]').classList.add('active');
+    document.getElementById('tab-cadeaux').classList.add('active');
   };
   document.querySelectorAll('.tab').forEach(tab => {
     tab.onclick = () => {
@@ -70,6 +87,12 @@ function setupEventListeners() {
   document.querySelectorAll('.modal').forEach(m => {
     m.onclick = (e) => { if (e.target === m) closeModal(m.id); };
   });
+
+  // Admin event listeners
+  document.getElementById('add-member-btn').onclick = addMember;
+  document.getElementById('add-category-btn').onclick = addCategory;
+  document.getElementById('new-member-name').onkeypress = (e) => { if (e.key === 'Enter') addMember(); };
+  document.getElementById('new-category-name').onkeypress = (e) => { if (e.key === 'Enter') addCategory(); };
 }
 
 async function loadCadeaux() {
@@ -138,12 +161,14 @@ async function saveCadeau(e) {
     body: JSON.stringify(data)
   });
   closeModal('modal-cadeau'); loadCadeaux(); loadStats();
+  if (isAdmin) loadAdminData();
 }
 
 async function deleteCadeau(id) {
   if (!confirm('Supprimer ?')) return;
   await fetch('/api/cadeaux/' + id, {method: 'DELETE'});
   loadCadeaux(); loadStats();
+  if (isAdmin) loadAdminData();
 }
 
 async function loadPlats() {
@@ -212,3 +237,141 @@ async function deletePlat(id) {
 }
 
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ========== ADMIN FUNCTIONS ==========
+
+async function loadAdminData() {
+  await loadAdminStats();
+  await loadAllCadeaux();
+  renderMembersList();
+  renderCategoriesList();
+}
+
+async function loadAdminStats() {
+  const res = await fetch('/api/stats/global');
+  const s = await res.json();
+  document.getElementById('admin-stats-bar').innerHTML =
+    '<div class="stat"><div class="stat-value">' + (s.total||0) + '</div><div class="stat-label">Total cadeaux</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.achetes||0) + '</div><div class="stat-label">Achetes</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.a_acheter||0) + '</div><div class="stat-label">A acheter</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.total_prix||0).toFixed(0) + ' EUR</div><div class="stat-label">Budget total</div></div>';
+}
+
+async function loadAllCadeaux() {
+  const res = await fetch('/api/cadeaux/all');
+  const list = await res.json();
+  const c = document.getElementById('admin-cadeaux-list');
+  if (!list.length) { c.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Aucun cadeau</p>'; return; }
+  c.innerHTML = list.map(x =>
+    '<div class="card admin-card"><div class="card-header"><span class="card-title">Pour ' + x.destinataire + '</span>' +
+    '<span class="card-badge ' + (x.statut==='achete'?'badge-achete':'badge-a-acheter') + '">' + x.statut + '</span></div>' +
+    '<div class="card-info"><strong>Description:</strong> ' + x.description + '</div>' +
+    '<div class="card-info"><strong>Acheteur:</strong> ' + (x.acheteur || 'Non defini') + '</div>' +
+    (x.prix ? '<div class="card-info"><strong>Prix:</strong> ' + x.prix + ' EUR</div>' : '') +
+    (x.magasin ? '<div class="card-info"><strong>Magasin:</strong> ' + x.magasin + '</div>' : '') +
+    (x.url ? '<a href="' + x.url + '" target="_blank" class="card-link">Voir le lien</a>' : '') +
+    '<div class="card-actions"><button class="btn-edit" onclick="editCadeauAdmin(' + x.id + ')">Modifier</button>' +
+    '<button class="btn-delete" onclick="deleteCadeauAdmin(' + x.id + ')">Supprimer</button></div></div>'
+  ).join('');
+}
+
+async function editCadeauAdmin(id) {
+  const res = await fetch('/api/cadeaux/all');
+  const c = (await res.json()).find(x => x.id === id);
+  if (c) {
+    // For admin, show all members in destinataire select
+    document.getElementById('cadeau-destinataire').innerHTML = config.familyMembers
+      .map(n => '<option value="' + n + '">' + n + '</option>').join('');
+    openCadeauModal(c);
+  }
+}
+
+async function deleteCadeauAdmin(id) {
+  if (!confirm('Supprimer ce cadeau ?')) return;
+  await fetch('/api/cadeaux/' + id, {method: 'DELETE'});
+  loadAllCadeaux();
+  loadAdminStats();
+  loadCadeaux();
+  loadStats();
+}
+
+function renderMembersList() {
+  const c = document.getElementById('members-list');
+  c.innerHTML = config.familyMembers.map(m =>
+    '<div class="member-tag">' + m +
+    (m !== config.admin ? '<button class="remove-btn" onclick="removeMember(\'' + m + '\')">&times;</button>' : '') +
+    '</div>'
+  ).join('');
+}
+
+function renderCategoriesList() {
+  const c = document.getElementById('categories-list');
+  c.innerHTML = config.categories.map(cat =>
+    '<div class="member-tag">' + cat +
+    '<button class="remove-btn" onclick="removeCategory(\'' + cat + '\')">&times;</button>' +
+    '</div>'
+  ).join('');
+}
+
+async function addMember() {
+  const input = document.getElementById('new-member-name');
+  const name = input.value.trim();
+  if (!name) return;
+
+  await fetch('/api/config/members', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name })
+  });
+
+  input.value = '';
+  await loadConfig();
+  renderMembersList();
+  setupUserButtons();
+  setupSelects();
+  updateDestinataireSelect();
+}
+
+async function removeMember(name) {
+  if (!confirm('Supprimer ' + name + ' de la liste ?')) return;
+
+  await fetch('/api/config/members/' + encodeURIComponent(name), {
+    method: 'DELETE'
+  });
+
+  await loadConfig();
+  renderMembersList();
+  setupUserButtons();
+  setupSelects();
+  updateDestinataireSelect();
+}
+
+async function addCategory() {
+  const input = document.getElementById('new-category-name');
+  const name = input.value.trim();
+  if (!name) return;
+
+  await fetch('/api/config/categories', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name })
+  });
+
+  input.value = '';
+  await loadConfig();
+  renderCategoriesList();
+  setupSelects();
+}
+
+async function removeCategory(name) {
+  if (!confirm('Supprimer la categorie ' + name + ' ?')) return;
+
+  await fetch('/api/config/categories/' + encodeURIComponent(name), {
+    method: 'DELETE'
+  });
+
+  await loadConfig();
+  renderCategoriesList();
+  setupSelects();
+  loadPlats();
+}

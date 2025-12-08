@@ -147,6 +147,83 @@ app.delete('/api/plats/:id', (req, res) => {
   });
 });
 
+// Route tous les cadeaux (admin)
+app.get('/api/cadeaux/all', (req, res) => {
+  db.all('SELECT * FROM cadeaux ORDER BY created_at DESC', [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows);
+  });
+});
+
+// Route stats globales (admin)
+app.get('/api/stats/global', (req, res) => {
+  db.get(
+    `SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN statut = 'achete' THEN 1 ELSE 0 END) as achetes,
+      SUM(CASE WHEN statut = 'a acheter' THEN 1 ELSE 0 END) as a_acheter,
+      SUM(prix) as total_prix
+     FROM cadeaux`,
+    [],
+    (err, row) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json(row);
+    }
+  );
+});
+
+// Route gestion membres
+app.post('/api/config/members', (req, res) => {
+  const { name } = req.body;
+  const configPath = path.join(__dirname, 'config.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+  if (!config.familyMembers.includes(name)) {
+    config.familyMembers.push(name);
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  }
+  res.json({ success: true, members: config.familyMembers });
+});
+
+app.delete('/api/config/members/:name', (req, res) => {
+  const { name } = req.params;
+  const configPath = path.join(__dirname, 'config.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+  config.familyMembers = config.familyMembers.filter(m => m !== name);
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  res.json({ success: true, members: config.familyMembers });
+});
+
+// Route gestion categories
+app.post('/api/config/categories', (req, res) => {
+  const { name } = req.body;
+  const configPath = path.join(__dirname, 'config.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+  if (!config.categories.includes(name)) {
+    config.categories.push(name);
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  }
+  res.json({ success: true, categories: config.categories });
+});
+
+app.delete('/api/config/categories/:name', (req, res) => {
+  const { name } = req.params;
+  const configPath = path.join(__dirname, 'config.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+  config.categories = config.categories.filter(c => c !== name);
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  res.json({ success: true, categories: config.categories });
+});
+
 // Route stats
 app.get('/api/stats', (req, res) => {
   const { user } = req.query;
