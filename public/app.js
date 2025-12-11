@@ -91,6 +91,9 @@ function verifyAdminCode() {
 }
 
 function setupEventListeners() {
+  document.getElementById('help-btn').onclick = () => {
+    document.getElementById('modal-help').classList.remove('hidden');
+  };
   document.getElementById('logout-btn').onclick = () => {
     currentUser = '';
     isAdmin = false;

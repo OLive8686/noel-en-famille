@@ -20,6 +20,7 @@
       <h1>Noël en Famille</h1>
       <div class="header-info">
         <span id="current-user-display"></span>
+        <button id="help-btn" class="btn-small btn-help">?</button>
         <button id="logout-btn" class="btn-small">Changer</button>
       </div>
     </header>
@@ -172,6 +173,47 @@
           <button type="submit" class="btn-save">Enregistrer</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="modal-help" class="modal hidden">
+    <div class="modal-content modal-help-content">
+      <h2>Comment ça marche ?</h2>
+
+      <div class="help-section">
+        <h3>Ma liste de souhaits</h3>
+        <p>Ajoutez les cadeaux que vous aimeriez recevoir (budget max 40€ par cadeau).</p>
+        <ul>
+          <li>Cliquez sur <strong>« + Ajouter un souhait »</strong></li>
+          <li>Décrivez le cadeau, ajoutez un lien si possible</li>
+          <li>Quand quelqu'un réserve votre souhait, vous verrez <span class="badge-example badge-reserve-ok">Quelqu'un va vous l'offrir !</span> (sans savoir qui)</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>Souhaits des autres</h3>
+        <p>Consultez les souhaits des autres membres et réservez ceux que vous voulez offrir.</p>
+        <ul>
+          <li>Cliquez sur <strong>« Réserver ce cadeau »</strong> pour indiquer que vous allez l'acheter</li>
+          <li>La réservation est <strong>anonyme</strong> : personne ne sait que c'est vous (sauf vous !)</li>
+          <li>Vous pouvez annuler votre réservation à tout moment</li>
+          <li>Un souhait déjà réservé affiche <span class="badge-example badge-reserve">Réservé</span></li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>Cadeaux planifiés</h3>
+        <p>Section optionnelle pour noter les cadeaux que vous prévoyez d'offrir en dehors des listes de souhaits.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>Repas</h3>
+        <p>Indiquez quel plat vous apportez pour le repas de Noël (apéro, entrée, plat, dessert, boisson).</p>
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-save" onclick="closeModal('modal-help')">J'ai compris !</button>
+      </div>
     </div>
   </div>
 
