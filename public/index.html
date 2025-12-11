@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Noel en Famille</title>
+  <title>Noël en Famille</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="login-screen" class="screen">
     <div class="login-container">
-      <h1>Noel en Famille</h1>
-      <p>Qui etes-vous ?</p>
+      <h1>Noël en Famille</h1>
+      <p>Qui êtes-vous ?</p>
       <div id="user-buttons" class="user-buttons"></div>
     </div>
   </div>
 
   <div id="app-screen" class="screen hidden">
     <header>
-      <h1>Noel en Famille</h1>
+      <h1>Noël en Famille</h1>
       <div class="header-info">
         <span id="current-user-display"></span>
         <button id="logout-btn" class="btn-small">Changer</button>
@@ -32,7 +32,28 @@
 
     <div id="tab-cadeaux" class="tab-content active">
       <div class="stats-bar" id="stats-bar"></div>
-      <button id="add-cadeau-btn" class="btn-add">+ Ajouter un cadeau</button>
+
+      <!-- Section Ma liste de souhaits -->
+      <div class="section-header">
+        <h2>Ma liste de souhaits</h2>
+        <button id="add-souhait-btn" class="btn-add">+ Ajouter un souhait</button>
+      </div>
+      <p class="section-hint">Indiquez ce que vous aimeriez recevoir (budget max 40€ par cadeau)</p>
+      <div id="mes-souhaits-list" class="items-list"></div>
+
+      <!-- Section Souhaits des autres -->
+      <div class="section-header" style="margin-top: 30px;">
+        <h2>Souhaits des autres</h2>
+      </div>
+      <p class="section-hint">Réservez un souhait pour l'offrir (la réservation est anonyme)</p>
+      <div id="autres-souhaits-list" class="items-list"></div>
+
+      <!-- Section Cadeaux (ancien système) -->
+      <div class="section-header" style="margin-top: 30px;">
+        <h2>Cadeaux planifiés</h2>
+        <button id="add-cadeau-btn" class="btn-add">+ Ajouter un cadeau</button>
+      </div>
+      <p class="section-hint">Cadeaux que vous prévoyez d'offrir (non liés aux souhaits)</p>
       <div id="cadeaux-list" class="items-list"></div>
     </div>
 
@@ -62,10 +83,10 @@
       </div>
 
       <div class="admin-section">
-        <h3>Gestion des categories</h3>
+        <h3>Gestion des catégories</h3>
         <div id="categories-list" class="members-grid"></div>
         <div class="add-member-form">
-          <input type="text" id="new-category-name" placeholder="Nouvelle categorie...">
+          <input type="text" id="new-category-name" placeholder="Nouvelle catégorie...">
           <button id="add-category-btn" class="btn-add-small">Ajouter</button>
         </div>
       </div>
@@ -83,14 +104,14 @@
         <input type="text" id="cadeau-description" required placeholder="Ex: Pull rouge taille M">
         <label>Lien (optionnel)</label>
         <input type="url" id="cadeau-url" placeholder="https://...">
-        <label>Prix estime</label>
+        <label>Prix estimé</label>
         <input type="number" id="cadeau-prix" step="0.01" placeholder="0.00">
         <label>Magasin</label>
         <input type="text" id="cadeau-magasin" placeholder="Ex: Amazon, Fnac...">
         <label>Statut</label>
         <select id="cadeau-statut">
-          <option value="a acheter">A acheter</option>
-          <option value="achete">Achete</option>
+          <option value="a acheter">À acheter</option>
+          <option value="achete">Acheté</option>
         </select>
         <div class="modal-buttons">
           <button type="button" class="btn-cancel" onclick="closeModal('modal-cadeau')">Annuler</button>
@@ -107,12 +128,12 @@
         <input type="hidden" id="plat-id">
         <label>Nom du plat</label>
         <input type="text" id="plat-nom" required placeholder="Ex: Buche au chocolat">
-        <label>Categorie</label>
+        <label>Catégorie</label>
         <select id="plat-categorie" required></select>
-        <label>Apporte par</label>
+        <label>Apporté par</label>
         <select id="plat-apporte-par" required></select>
         <label>Commentaires</label>
-        <textarea id="plat-commentaires" placeholder="Allergies, preferences..."></textarea>
+        <textarea id="plat-commentaires" placeholder="Allergies, préférences..."></textarea>
         <div class="modal-buttons">
           <button type="button" class="btn-cancel" onclick="closeModal('modal-plat')">Annuler</button>
           <button type="submit" class="btn-save">Enregistrer</button>
@@ -123,13 +144,34 @@
 
   <div id="modal-admin-code" class="modal hidden">
     <div class="modal-content" style="max-width:300px;">
-      <h2>Acces Admin</h2>
+      <h2>Accès Admin</h2>
       <p style="text-align:center;color:#666;margin-bottom:15px;">Entrez le code secret</p>
       <input type="password" id="admin-code-input" placeholder="Code..." style="text-align:center;font-size:1.5rem;letter-spacing:5px;">
       <div class="modal-buttons">
         <button type="button" class="btn-cancel" onclick="closeModal('modal-admin-code')">Annuler</button>
         <button type="button" class="btn-save" onclick="verifyAdminCode()">Valider</button>
       </div>
+    </div>
+  </div>
+
+  <div id="modal-souhait" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="modal-souhait-title">Ajouter un souhait</h2>
+      <form id="form-souhait">
+        <input type="hidden" id="souhait-id">
+        <label>Description</label>
+        <input type="text" id="souhait-description" required placeholder="Ex: Livre de cuisine, Pull bleu taille M...">
+        <label>Lien (optionnel)</label>
+        <input type="url" id="souhait-url" placeholder="https://...">
+        <label>Prix estimé (max 40€)</label>
+        <input type="number" id="souhait-prix" step="0.01" max="40" placeholder="0.00">
+        <label>Magasin</label>
+        <input type="text" id="souhait-magasin" placeholder="Ex: Amazon, Fnac...">
+        <div class="modal-buttons">
+          <button type="button" class="btn-cancel" onclick="closeModal('modal-souhait')">Annuler</button>
+          <button type="submit" class="btn-save">Enregistrer</button>
+        </div>
+      </form>
     </div>
   </div>
 

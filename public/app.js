@@ -67,7 +67,7 @@ function showApp() {
   }
 
   updateDestinataireSelect();
-  loadCadeaux(); loadPlats(); loadStats();
+  loadCadeaux(); loadPlats(); loadStats(); loadSouhaits();
   if (isAdmin) loadAdminData();
 }
 
@@ -113,8 +113,10 @@ function setupEventListeners() {
   });
   document.getElementById('add-cadeau-btn').onclick = () => openCadeauModal();
   document.getElementById('add-plat-btn').onclick = () => openPlatModal();
+  document.getElementById('add-souhait-btn').onclick = () => openSouhaitModal();
   document.getElementById('form-cadeau').onsubmit = saveCadeau;
   document.getElementById('form-plat').onsubmit = savePlat;
+  document.getElementById('form-souhait').onsubmit = saveSouhait;
   document.querySelectorAll('.modal').forEach(m => {
     m.onclick = (e) => { if (e.target === m) closeModal(m.id); };
   });
@@ -139,7 +141,7 @@ function renderCadeaux(list) {
     '<div class="card"><div class="card-header"><span class="card-title">Pour ' + x.destinataire + '</span>' +
     '<span class="card-badge ' + (x.statut==='achete'?'badge-achete':'badge-a-acheter') + '">' + x.statut + '</span></div>' +
     '<div class="card-info"><strong>Description:</strong> ' + x.description + '</div>' +
-    (x.prix ? '<div class="card-info"><strong>Prix:</strong> ' + x.prix + ' EUR</div>' : '') +
+    (x.prix ? '<div class="card-info"><strong>Prix:</strong> ' + x.prix + '€</div>' : '') +
     (x.magasin ? '<div class="card-info"><strong>Magasin:</strong> ' + x.magasin + '</div>' : '') +
     (x.url ? '<a href="' + x.url + '" target="_blank" class="card-link">Voir le lien</a>' : '') +
     '<div class="card-actions"><button class="btn-edit" onclick="editCadeau(' + x.id + ')">Modifier</button>' +
@@ -152,9 +154,9 @@ async function loadStats() {
   const s = await res.json();
   document.getElementById('stats-bar').innerHTML =
     '<div class="stat"><div class="stat-value">' + (s.total||0) + '</div><div class="stat-label">Total</div></div>' +
-    '<div class="stat"><div class="stat-value">' + (s.achetes||0) + '</div><div class="stat-label">Achetes</div></div>' +
-    '<div class="stat"><div class="stat-value">' + (s.a_acheter||0) + '</div><div class="stat-label">A acheter</div></div>' +
-    '<div class="stat"><div class="stat-value">' + (s.total_prix||0).toFixed(0) + ' EUR</div><div class="stat-label">Budget</div></div>';
+    '<div class="stat"><div class="stat-value">' + (s.achetes||0) + '</div><div class="stat-label">Achetés</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.a_acheter||0) + '</div><div class="stat-label">À acheter</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.total_prix||0).toFixed(0) + '€</div><div class="stat-label">Budget</div></div>';
 }
 
 function openCadeauModal(c) {
@@ -270,6 +272,156 @@ async function deletePlat(id) {
 
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+// ========== SOUHAITS FUNCTIONS ==========
+
+async function loadSouhaits() {
+  const res = await fetch('/api/souhaits?user=' + encodeURIComponent(currentUser));
+  const souhaits = await res.json();
+
+  // Séparer mes souhaits et ceux des autres
+  const mesSouhaits = souhaits.filter(s => s.user === currentUser);
+  const autresSouhaits = souhaits.filter(s => s.user !== currentUser);
+
+  renderMesSouhaits(mesSouhaits);
+  renderAutresSouhaits(autresSouhaits);
+}
+
+function renderMesSouhaits(list) {
+  const c = document.getElementById('mes-souhaits-list');
+  if (!list.length) {
+    c.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Vous n\'avez pas encore ajouté de souhait</p>';
+    return;
+  }
+  c.innerHTML = list.map(s => {
+    const badgeHtml = s.est_reserve ? '<span class="card-badge badge-reserve-ok">Quelqu\'un va vous l\'offrir !</span>' : '';
+    return '<div class="card souhait-card' + (s.est_reserve ? ' card-reserved-mine' : '') + '">' +
+    '<div class="card-header"><span class="card-title">' + s.description + '</span>' + badgeHtml + '</div>' +
+    (s.prix ? '<div class="card-info"><strong>Prix:</strong> ' + s.prix + '€</div>' : '') +
+    (s.magasin ? '<div class="card-info"><strong>Magasin:</strong> ' + s.magasin + '</div>' : '') +
+    (s.url ? '<a href="' + s.url + '" target="_blank" class="card-link">Voir le lien</a>' : '') +
+    '<div class="card-actions">' +
+    '<button class="btn-edit" onclick="editSouhait(' + s.id + ')">Modifier</button>' +
+    '<button class="btn-delete" onclick="deleteSouhait(' + s.id + ')">Supprimer</button>' +
+    '</div></div>';
+  }).join('');
+}
+
+function renderAutresSouhaits(list) {
+  const c = document.getElementById('autres-souhaits-list');
+  if (!list.length) {
+    c.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Aucun souhait des autres membres pour le moment</p>';
+    return;
+  }
+
+  // Grouper par personne
+  const byUser = {};
+  list.forEach(s => {
+    if (!byUser[s.user]) byUser[s.user] = [];
+    byUser[s.user].push(s);
+  });
+
+  let html = '';
+  Object.keys(byUser).sort().forEach(user => {
+    html += '<div class="category-header">Souhaits de ' + user + '</div>';
+    html += byUser[user].map(s => {
+      let badgeHtml = '';
+      let btnHtml = '';
+
+      if (s.reserve_par_moi) {
+        badgeHtml = '<span class="card-badge badge-reserve-moi">Réservé par vous</span>';
+        btnHtml = '<button class="btn-unreserve" onclick="toggleReservation(' + s.id + ')">Annuler réservation</button>';
+      } else if (s.est_reserve) {
+        badgeHtml = '<span class="card-badge badge-reserve">Réservé</span>';
+        // Pas de bouton si déjà réservé par quelqu'un d'autre
+      } else {
+        btnHtml = '<button class="btn-reserve" onclick="toggleReservation(' + s.id + ')">Réserver ce cadeau</button>';
+      }
+
+      return '<div class="card souhait-card' + (s.est_reserve ? ' card-reserved' : '') + '">' +
+        '<div class="card-header"><span class="card-title">' + s.description + '</span>' + badgeHtml + '</div>' +
+        (s.prix ? '<div class="card-info"><strong>Prix:</strong> ' + s.prix + '€</div>' : '') +
+        (s.magasin ? '<div class="card-info"><strong>Magasin:</strong> ' + s.magasin + '</div>' : '') +
+        (s.url ? '<a href="' + s.url + '" target="_blank" class="card-link">Voir le lien</a>' : '') +
+        '<div class="card-actions">' + btnHtml + '</div></div>';
+    }).join('');
+  });
+
+  c.innerHTML = html;
+}
+
+function openSouhaitModal(s) {
+  document.getElementById('modal-souhait-title').textContent = s ? 'Modifier mon souhait' : 'Ajouter un souhait';
+  document.getElementById('souhait-id').value = s?.id || '';
+  document.getElementById('souhait-description').value = s?.description || '';
+  document.getElementById('souhait-url').value = s?.url || '';
+  document.getElementById('souhait-prix').value = s?.prix || '';
+  document.getElementById('souhait-magasin').value = s?.magasin || '';
+  document.getElementById('modal-souhait').classList.remove('hidden');
+}
+
+async function editSouhait(id) {
+  const res = await fetch('/api/souhaits/mine?user=' + encodeURIComponent(currentUser));
+  const s = (await res.json()).find(x => x.id === id);
+  if (s) openSouhaitModal(s);
+}
+
+async function saveSouhait(e) {
+  e.preventDefault();
+  const id = document.getElementById('souhait-id').value;
+  const prix = document.getElementById('souhait-prix').value;
+
+  // Validation côté client
+  if (prix && parseFloat(prix) > 40) {
+    alert('Le budget maximum est de 40€');
+    return;
+  }
+
+  const data = {
+    user: currentUser,
+    description: document.getElementById('souhait-description').value,
+    url: document.getElementById('souhait-url').value,
+    prix: prix,
+    magasin: document.getElementById('souhait-magasin').value
+  };
+
+  const res = await fetch(id ? '/api/souhaits/' + id : '/api/souhaits', {
+    method: id ? 'PUT' : 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || 'Erreur');
+    return;
+  }
+
+  closeModal('modal-souhait');
+  loadSouhaits();
+}
+
+async function deleteSouhait(id) {
+  if (!confirm('Supprimer ce souhait ?')) return;
+  await fetch('/api/souhaits/' + id + '?user=' + encodeURIComponent(currentUser), {method: 'DELETE'});
+  loadSouhaits();
+}
+
+async function toggleReservation(id) {
+  const res = await fetch('/api/souhaits/' + id + '/reserve', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ user: currentUser })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || 'Erreur');
+    return;
+  }
+
+  loadSouhaits();
+}
+
 // ========== ADMIN FUNCTIONS ==========
 
 async function loadAdminData() {
@@ -284,9 +436,9 @@ async function loadAdminStats() {
   const s = await res.json();
   document.getElementById('admin-stats-bar').innerHTML =
     '<div class="stat"><div class="stat-value">' + (s.total||0) + '</div><div class="stat-label">Total cadeaux</div></div>' +
-    '<div class="stat"><div class="stat-value">' + (s.achetes||0) + '</div><div class="stat-label">Achetes</div></div>' +
-    '<div class="stat"><div class="stat-value">' + (s.a_acheter||0) + '</div><div class="stat-label">A acheter</div></div>' +
-    '<div class="stat"><div class="stat-value">' + (s.total_prix||0).toFixed(0) + ' EUR</div><div class="stat-label">Budget total</div></div>';
+    '<div class="stat"><div class="stat-value">' + (s.achetes||0) + '</div><div class="stat-label">Achetés</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.a_acheter||0) + '</div><div class="stat-label">À acheter</div></div>' +
+    '<div class="stat"><div class="stat-value">' + (s.total_prix||0).toFixed(0) + '€</div><div class="stat-label">Budget total</div></div>';
 }
 
 async function loadAllCadeaux() {
@@ -299,7 +451,7 @@ async function loadAllCadeaux() {
     '<span class="card-badge ' + (x.statut==='achete'?'badge-achete':'badge-a-acheter') + '">' + x.statut + '</span></div>' +
     '<div class="card-info"><strong>Description:</strong> ' + x.description + '</div>' +
     '<div class="card-info"><strong>Acheteur:</strong> ' + (x.acheteur || 'Non defini') + '</div>' +
-    (x.prix ? '<div class="card-info"><strong>Prix:</strong> ' + x.prix + ' EUR</div>' : '') +
+    (x.prix ? '<div class="card-info"><strong>Prix:</strong> ' + x.prix + '€</div>' : '') +
     (x.magasin ? '<div class="card-info"><strong>Magasin:</strong> ' + x.magasin + '</div>' : '') +
     (x.url ? '<a href="' + x.url + '" target="_blank" class="card-link">Voir le lien</a>' : '') +
     '<div class="card-actions"><button class="btn-edit" onclick="editCadeauAdmin(' + x.id + ')">Modifier</button>' +
