@@ -17,6 +17,9 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // ========== CONNEXION TURSO ==========
+console.log('🔌 Connexion à Turso:', process.env.TURSO_DATABASE_URL ? 'URL définie' : '⚠️ URL manquante');
+console.log('🔑 Token:', process.env.TURSO_AUTH_TOKEN ? 'Token défini (' + process.env.TURSO_AUTH_TOKEN.length + ' chars)' : '⚠️ Token manquant');
+
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
